@@ -1,31 +1,4 @@
-def is_int(text):
-    if text.isdigit():
-        return True
-    if text.startswith("-") and text[1:].isdigit():
-        return True
-    return False
-
-
-def is_positive_int(value):
-    return value > 0
-
-
-# https://stackoverflow.com/questions/8270092/remove-all-whitespace-in-a-string
-def string_counter_without_space(text):
-    string_without_spaces = "".join(text.split())
-    string_counter = len(string_without_spaces)
-    return string_counter
-
-
-# https://www.geeksforgeeks.org/python/python-program-to-print-all-the-numbers-divisible-by-3-and-5-for-a-given-number/ and revised with claude to fit into my py program
-def int_diversion(start, end):
-    numbers = []
-    for num in range(start, end):
-        if num % 3 == 0:
-            numbers.append(num)
-    return numbers
-
-
+import function as fn
 # Oppgave 1.1 - Beregn tids bruk
 
 
@@ -34,13 +7,13 @@ def oppgave_1_1():
         study_sessions = input("\nHow many study session have you had: ")
         study_time = input("How much time have you used in each study sessions: ")
 
-        if not is_int(study_sessions):
+        if not fn.is_int(study_sessions):
             print(
                 f"{study_sessions}' is not a whole number. Please enter digits only, e.g. 3."
             )
             continue
 
-        if not is_int(study_time):
+        if not fn.is_int(study_time):
             print(
                 f"{study_time}' is not a whole number. Please enter digits only, e.g. 3."
             )
@@ -49,7 +22,7 @@ def oppgave_1_1():
         study_sessions = int(study_sessions)
         study_time = int(study_time)
 
-        if is_positive_int(study_sessions) and is_positive_int(study_time):
+        if fn.is_positive_int(study_sessions) and fn.is_positive_int(study_time):
             total_minutes = study_time * study_sessions
             hours, minutes = divmod(total_minutes, 60)
 
@@ -72,7 +45,7 @@ def oppgave_1_2():
             continue
         print(
             "\nThis is the amount of charcaters in the text without spaces: ",
-            string_counter_without_space(analyze_text),
+            fn.string_counter_without_space(analyze_text),
         )
         print(
             "This is the amount of charcaters in the text with spaces: ",
@@ -96,12 +69,12 @@ def oppgave_1_3():
         start_value = input("\nPlease provide an start value: ")
         end_value = input("Please provide an end value: ")
 
-        if not is_int(start_value):
+        if not fn.is_int(start_value):
             print(
                 f"{start_value}' is not a whole number. Please enter digits only, e.g. 3."
             )
             continue
-        if not is_int(end_value):
+        if not fn.is_int(end_value):
             print(
                 f"{end_value}' is not a whole number. Please enter digits only, e.g. 3."
             )
@@ -119,7 +92,7 @@ def oppgave_1_3():
 
         print(
             "This is every number that is dividable by 3: \n",
-            int_diversion(start_value, end_value),
+            fn.int_diversion(start_value, end_value),
         )
 
         print(
@@ -134,7 +107,7 @@ while True:
         "\nThis is an menu for multiple programs:\n 1. for an program to calculate time usage while studying\n 2. for an text analyzer\n 3. for an time interval analyzer\n 4. to exit\n Please enter an value: "
     )
 
-    if not is_int(user_input):
+    if not fn.is_int(user_input):
         print(f"{user_input} is not an whole number. Please enter digits e.g 3.")
         continue
 
