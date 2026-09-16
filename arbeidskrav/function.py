@@ -1,3 +1,6 @@
+from operator import itemgetter
+
+
 def is_int(text):
     if text.isdigit():
         return True
@@ -24,3 +27,18 @@ def int_diversion(start, end):
         if num % 3 == 0:
             numbers.append(num)
     return numbers
+
+
+def desending_list(sessions):
+    desending_list = sorted(sessions, key=itemgetter("duration_minutes"), reverse=True)
+    return desending_list
+
+
+def convert_int_to_hms(value):
+    value = float(value)
+    seconds = value * 60
+    m, s = divmod(seconds, 60)
+    s = round(s)
+    h, m = divmod(m, 60)
+    a = "%dh:%02dm:%02ds" % (h, m, s)
+    return a

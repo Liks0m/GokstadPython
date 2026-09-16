@@ -1,6 +1,5 @@
 import random
 import function as fn
-from operator import itemgetter, attrgetter
 import subprocess
 
 study_session_storage = []
@@ -59,7 +58,7 @@ def register_study_session():
 
         session = dict.copy(study_session)
 
-        # on line 59 the error zuban: Incompatible types in assignment (expression has type "int", target has type "str") can just be ignored
+        # on line 64 the error zuban: Incompatible types in assignment (expression has type "int", target has type "str") can just be ignored
         session["topic"] = topic
         session["duration_minutes"] = duration_minutes
         session["status"] = status
@@ -113,11 +112,6 @@ def list_search_topic(sessions, search):
     return search_sessions
 
 
-def desending_list(sessions):
-    desending_list = sorted(sessions, key=itemgetter("duration_minutes"), reverse=True)
-    return desending_list
-
-
 def sum_duration(sessions):
 
     duration_list = []
@@ -141,16 +135,6 @@ def average_duration(sessions):
 
 
 # https://discourse.mcneel.com/t/gh-python-convert-integer-time-to-h-m-s/159435/7
-
-
-def convert_int_to_hms(value):
-    value = float(value)
-    seconds = value * 60
-    m, s = divmod(seconds, 60)
-    s = round(s)
-    h, m = divmod(m, 60)
-    a = "%dh:%02dm:%02ds" % (h, m, s)
-    return a
 
 
 while True:
@@ -191,7 +175,7 @@ while True:
             list_study_sessions(search_topics)
             break
     elif user_input == 5:
-        desending = desending_list(study_session_storage)
+        desending = fn.desending_list(study_session_storage)
         list_study_sessions(desending)
     elif user_input == 6:
         collective_duration = sum_duration(completed_sessions)
@@ -199,10 +183,12 @@ while True:
 
         print(
             "\nThe total study time duration is",
-            convert_int_to_hms(collective_duration),
+            fn.convert_int_to_hms(collective_duration),
         )
 
-        print("The average study session lasts for", convert_int_to_hms(avg_duration))
+        print(
+            "The average study session lasts for", fn.convert_int_to_hms(avg_duration)
+        )
 
     elif user_input == 7:
         subprocess.call("clear")
