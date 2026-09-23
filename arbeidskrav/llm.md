@@ -186,7 +186,49 @@ Good call — for a learning exercise, explicit string validation (check the raw
 
 Here's the approach: validate the raw string with a small helper function, loop with `if`/`elif`/`else` until it's valid, and only call `int()` once we already know it's safe.
 
+*(Claude then rewrote `oppgave-1.py` with this content. I reverted it with prompt 2, so none of this code is in my solution:)*
+
+```python
+# Oppgave 1.1 - Beregn tids bruk
+
+def is_whole_number(text):
+    if text.isdigit():
+        return True
+    if text.startswith("-") and text[1:].isdigit():
+        return True
+    return False
+
+
+def read_positive_int(prompt):
+    while True:
+        raw_value = input(prompt).strip()
+
+        if raw_value == "":
+            print("Input cannot be empty. Please try again.")
+        elif not is_whole_number(raw_value):
+            print("Please enter a whole number (no letters or decimals). Please try again.")
+        elif int(raw_value) <= 0:
+            print("Please enter a number greater than zero. Please try again.")
+        else:
+            return int(raw_value)
+
+
+study_sessions = read_positive_int("How many study sessions have you had: ")
+study_time = read_positive_int("How many minutes did each study session last: ")
+
+total_minutes = study_sessions * study_time
+hours, minutes = divmod(total_minutes, 60)
+
+print("Number of study sessions:", study_sessions)
+print("Minutes per session:", study_time)
+print(f"Total study time: {hours} hours and {minutes} minutes")
+```
+
 All the invalid cases (empty, text, negative, zero, float) get their own clear message and the loop retries; valid input flows through to the calculation correctly. No `try/except` — just `is_whole_number()` + `if/elif/else` in a `while True` retry loop.
+
+Now let me save this as a feedback memory since it's a preference that'll likely apply to the rest of this course's exercises.
+
+Stopped — no further changes made beyond what's already saved (the rewritten `oppgave-1.py` and the memory note). Let me know if you want anything adjusted.
 
 </details>
 
@@ -494,7 +536,12 @@ Want me to apply this fix to the file?
 
 Line 65 currently only flags an error when the input is *exactly* `""` — the `and analyze_text == ""` clause means a string of only spaces (like `" "`) never matches, so it slips through. Fixing it to only check the whitespace-stripped result:
 
-*(Claude edited the line from `if analyze_text == "".join(analyze_text.split()) and analyze_text == "":` to `if "".join(analyze_text.split()) == "":`)*
+*(Claude made this edit to `oppgave-1.py`:)*
+
+```diff
+-    if analyze_text == "".join(analyze_text.split()) and analyze_text == "":
++    if "".join(analyze_text.split()) == "":
+```
 
 Now `"".join(analyze_text.split())` strips all whitespace out; if what's left is empty, the input was empty or whitespace-only, so it errors correctly for both `""` and `" "`.
 
@@ -519,6 +566,8 @@ Now `"".join(analyze_text.split())` strips all whitespace out; if what's left is
 >  so prints out numbers that are divible by 3. it lives in oppgave_1.py and should use the variables in the while loop callled start_value_int and end_value_int do not edit the file! explain me how i can refactor the code instead
 
 <details><summary>Response</summary>
+
+Found it — the file's actually named `oppgave-1.py` (hyphen, not underscore). Let me read it.
 
 Looking at `oppgave-1.py:80-90` and `oppgave-1.py:92-119`, here's what's actually going on and how to refactor it — I haven't touched the file, per your instructions.
 
@@ -672,6 +721,130 @@ So to directly answer your question: the `print(...)` call isn't moved or return
 
 <details><summary>Response</summary>
 
+*(Claude rewrote `oppgave-1.py` with this content. The helper functions and the code inside each `while True` loop were my own code. Claude moved them, fixed the indentation and wrapped each loop in a function:)*
+
+```python
+# Oppgave 1.1 - Beregn tids bruk
+# Oppgave 1.2 - Analyser tekst
+# Oppgave 1.3 - Analyser et tallintervall
+
+
+def is_int(text):
+    if text.isdigit():
+        return True
+    if text.startswith("-") and text[1:].isdigit():
+        return True
+    return False
+
+
+def is_positive_int(value):
+    return value > 0
+
+
+# https://stackoverflow.com/questions/8270092/remove-all-whitespace-in-a-string
+def string_counter_without_space(text):
+    string_without_spaces = "".join(text.split())
+    string_counter = len(string_without_spaces)
+    return string_counter
+
+
+# https://www.geeksforgeeks.org/python/python-program-to-print-all-the-numbers-divisible-by-3-and-5-for-a-given-number/ and revised with claude to fit into my py program
+def int_diversion(start, end):
+    numbers = []
+    for num in range(start, end):
+        if num % 3 == 0:
+            numbers.append(num)
+    return numbers
+
+
+def oppgave_1_1():
+    while True:
+        study_sessions = input("How many study session have you had: ")
+        study_time = input("How much time have you used in each study sessions: ")
+
+        if not is_int(study_sessions):
+            print(
+                f"{study_sessions}' is not a whole number. Please enter digits only, e.g. 3."
+            )
+            continue
+
+        if not is_int(study_time):
+            print(f"{study_time}' is not a whole number. Please enter digits only, e.g. 3.")
+            continue
+
+        study_sessions_int = int(study_sessions)
+        study_time_int = int(study_time)
+
+        if is_positive_int(study_sessions_int) and is_positive_int(study_time_int):
+            total_minutes = study_time_int * study_sessions_int
+            hours, minutes = divmod(total_minutes, 60)
+
+            print("Number of study sessions:", study_sessions)
+            print("Minutes per session:", study_time)
+            print(f"Total study time: {hours} hours and {minutes} minutes")
+            break
+
+
+def oppgave_1_2():
+    while True:
+        analyze_text = input("Write an text here to be analyzed: ")
+
+        # ai recommended this fix at line 55
+        if "".join(analyze_text.split()) == "":
+            print("Please provide an text and not just spaces")
+            continue
+        print(
+            "This is the amount of charcaters in the text without spaces: ",
+            string_counter_without_space(analyze_text),
+        )
+        print(
+            "This is the amount of charcaters in the text with spaces: ",
+            len(analyze_text),
+        )
+
+        print("This is the text with only small letters:", analyze_text.lower())
+
+        print("This is the text in reverse: ", analyze_text[::-1])
+
+        if "python" in analyze_text.casefold():
+            print("This text contains the word python")
+        break
+
+
+def oppgave_1_3():
+    while True:
+        start_value = input("Please provide an start value: ")
+        end_value = input("Please provide an end value: ")
+
+        if not is_int(start_value):
+            print("Please enter an number and not an string")
+            continue
+        if not is_int(end_value):
+            print("Please enter an number and not an string")
+            continue
+
+        start_value_int = int(start_value)
+        end_value_int = int(end_value)
+
+        if start_value_int > end_value_int:
+            print("Please enter an start value which is smaller then the end value")
+            continue
+
+        even_range = range(start_value_int, end_value_int, 2)
+        print("Every even number in the range: \n", list(even_range))
+
+        print(
+            "This is every number that is dividable by 3: \n",
+            int_diversion(start_value_int, end_value_int),
+        )
+
+        print(
+            "This is the sum of every number in the range: \n",
+            sum(range(start_value_int, end_value_int)),
+        )
+        break
+```
+
 All four helper/logic functions (`is_int`, `is_positive_int`, `string_counter_without_space`, `int_diversion`) are now grouped at the top, and each previously-commented-out block for 1.1/1.2/1.3 is uncommented and wrapped in its own function (`oppgave_1_1`, `oppgave_1_2`, `oppgave_1_3`), each holding its `while True` loop with correct indentation. File compiles clean. I left out an actual menu/call at the bottom since you said you want to build that yourself — just call `oppgave_1_1()`, `oppgave_1_2()`, or `oppgave_1_3()` from wherever your menu logic ends up.
 
 </details>
@@ -694,23 +867,164 @@ All four helper/logic functions (`is_int`, `is_positive_int`, `string_counter_wi
 
 <details><summary>Response 1 (reverted)</summary>
 
+*(Claude rewrote `oppgave-2.py` with this content:)*
+
+```python
+import random
+
+import function as fn
+
+study_session = {
+    "topic": "",
+    "duration_minutes": int(),
+    "status": "",
+}
+
+topics = ["Python", "Matematikk", "Historie", "Engelsk", "Fysikk"]
+statuses = ["planned", "completed"]
+
+
+class ExampleStudySession01:
+    def __init__(self, topic, duration_minutes, status):
+        self.topic = topic
+        self.duration_minutes = duration_minutes
+        self.status = status
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(topic={self.topic!r}, "
+            f"duration_minutes={self.duration_minutes}, status={self.status!r})"
+        )
+
+
+class ExampleStudySession02(ExampleStudySession01):
+    def __init__(self):
+        super().__init__(
+            random.choice(topics),
+            random.randint(15, 120),
+            random.choice(statuses),
+        )
+
+
+class ExampleStudySession03(ExampleStudySession01):
+    def __init__(self):
+        super().__init__(
+            random.choice(topics),
+            random.randint(15, 120),
+            random.choice(statuses),
+        )
+
+
+class ExampleStudySession04(ExampleStudySession01):
+    def __init__(self):
+        super().__init__(
+            random.choice(topics),
+            random.randint(15, 120),
+            random.choice(statuses),
+        )
+
+
+class ExampleStudySession05(ExampleStudySession01):
+    def __init__(self):
+        super().__init__(
+            random.choice(topics),
+            random.randint(15, 120),
+            random.choice(statuses),
+        )
+
+
+if __name__ == "__main__":
+    example_sessions = [
+        ExampleStudySession02(),
+        ExampleStudySession03(),
+        ExampleStudySession04(),
+        ExampleStudySession05(),
+    ]
+
+    for session in example_sessions:
+        print(session)
+```
+
 Runs fine. `ExampleStudySession01` is now the base class (`topic`, `duration_minutes`, `status`); `ExampleStudySession02`–`05` subclass it and each generate a random topic, a random duration (15–120 min), and a random status (`planned`/`completed`) on construction — verified by running the file.
 
 </details>
 
 **Prompt 2:**
-> i just wanted you to rewrite the classes to have random topic strings and random ints for duration_minutes and status set as either planned or completed the classes are there just edit the text and int
+> revert
 
 <details><summary>Response 2</summary>
+
+Reverted `oppgave-2.py` to its original skeleton (the untracked, uncommitted version from before my edit).
+
+</details>
+
+**Prompt 3:**
+> i just wanted you to rewrite the classes to have random topic strings and random ints for duration_minutes and status set as either planned or completed the classes are there just edit the text and int
+
+<details><summary>Response 3</summary>
+
+*(Claude rewrote `oppgave-2.py` with this content. I later replaced the five classes myself with one class that uses `__init__`, see entry 19:)*
+
+```python
+import random
+
+import function as fn
+
+study_session = {
+    "topic": "",
+    "duration_minutes": int(),
+    "status": "",
+}
+
+topics = ["Python", "Matematikk", "Historie", "Engelsk", "Fysikk"]
+statuses = ["planned", "completed"]
+
+
+class ExampleStudySession01:
+    topic = random.choice(topics)
+    duration_minutes = random.randint(15, 120)
+    status = random.choice(statuses)
+
+
+class ExampleStudySession02:
+    topic = random.choice(topics)
+    duration_minutes = random.randint(15, 120)
+    status = random.choice(statuses)
+
+
+class ExampleStudySession03:
+    topic = random.choice(topics)
+    duration_minutes = random.randint(15, 120)
+    status = random.choice(statuses)
+
+
+class ExampleStudySession04:
+    topic = random.choice(topics)
+    duration_minutes = random.randint(15, 120)
+    status = random.choice(statuses)
+
+
+class ExampleStudySession05:
+    topic = random.choice(topics)
+    duration_minutes = random.randint(15, 120)
+    status = random.choice(statuses)
+```
 
 Filled in `ExampleStudySession01`–`05` directly (no `__init__`, no inheritance) — each class body just sets `topic`, `duration_minutes`, and `status` via `random.choice`/`random.randint`, matching the empty class you had. Verified it loads and each class gets distinct random values.
 
 </details>
 
-**Prompt 3:**
+**Prompt 4:**
 > edit them to be english
 
-<details><summary>Response 3</summary>
+<details><summary>Response 4</summary>
+
+*(Claude made this edit to `oppgave-2.py`:)*
+
+```diff
+-topics = ["Python", "Matematikk", "Historie", "Engelsk", "Fysikk"]
++topics = ["Python", "Math", "History", "English", "Physics"]
+```
 
 Translated the topic list to English: `["Python", "Math", "History", "English", "Physics"]`.
 
@@ -1389,6 +1703,20 @@ Compare with `average_duration` right below it (lines 128-136) — it does the s
 <details><summary>Response 1</summary>
 
 That's a clean approach — pause with `input()` so the user can read the output, then clear with `subprocess.call("clear")` before looping back to the menu. I'll skip that for option 7 since it already clears and exits.
+
+*(Claude made this edit to `oppgave-2.py`:)*
+
+```diff
+     elif user_input == 7:
+         subprocess.call("clear")
+         break
+     else:
+         print("Please provide input")
++
++    if user_input != 7:
++        input("\nPress enter to continue...")
++        subprocess.call("clear")
+```
 
 Added after the if/elif chain (oppgave-2.py:210-212): once a menu action finishes, it waits for `input("\nPress enter to continue...")` so the user can read the output, then runs `subprocess.call("clear")` before looping back to the menu. Option 7 is excluded since it already clears and exits.
 
@@ -2497,12 +2825,36 @@ Same reasoning applies to line 21 (`study_sessions == None`) — an `int` is nev
 
 I'll add a helper function that checks if the *entire* string is just a number (int or float), then reject only that case at line 58 — so a sentence like "i have an gpa of 4" still passes since it's not purely a number.
 
+*(Claude added this function to `oppgave-1.py` before I stopped it and asked for a revert:)*
+
+```python
+def is_only_number(text):
+    text = text.strip()
+    if text.startswith("-"):
+        text = text[1:]
+
+    if text.count(".") == 1:
+        integer_part, decimal_part = text.split(".")
+        return integer_part.isdigit() and decimal_part.isdigit()
+
+    return text.isdigit()
+```
+
 </details>
 
 **Prompt 2:**
-> explain me how i can implement this myself
+> revert
 
 <details><summary>Response 2</summary>
+
+Reverted — the file is back to its original state.
+
+</details>
+
+**Prompt 3:**
+> explain me how i can implement this myself
+
+<details><summary>Response 3</summary>
 
 Here's the logic, broken into steps you can write yourself:
 
