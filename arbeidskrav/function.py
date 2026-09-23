@@ -1,4 +1,5 @@
 from operator import itemgetter
+import datetime as dt
 
 
 def is_int(text):
@@ -42,3 +43,11 @@ def convert_int_to_hms(value):
     h, m = divmod(m, 60)
     a = "%dh:%02dm:%02ds" % (h, m, s)
     return a
+
+
+# https://stackoverflow.com/questions/28988281/how-to-add-two-datetime-datetime-objects
+BASE_DATE = dt.datetime(1900, 1, 1)
+
+
+def sum_date_times(dates):
+    return sum((dt - BASE_DATE for dt in dates), dt.timedelta(0)) + BASE_DATE

@@ -48,7 +48,7 @@ def register_study_session():
         duration_minutes = int(duration_minutes)
 
         if not fn.is_positive_int(duration_minutes):
-            print(f"{duration_minutes} is not an integer, please try again.")
+            print(f"{duration_minutes} is not an positive integer, please try again.")
 
         status = input("Please state if the status is planned or completed:")
 
