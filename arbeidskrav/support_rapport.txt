@@ -1,0 +1,53 @@
+number of valid cases and number in each category:
+
+The amount of support_requests are 15
+The amount of cases within the category of innlogging is 4 
+The amount of cases within the category of programvare is 4 
+The amount of cases within the category of nettverk is 2 
+The amount of cases within the category of utstyr is 5 
+
+total and average time spent on each completed case, with averages to one decimal place:
+
+The total time of all completed cases is 7:46:00 
+The average time of all cases in one danecimal place is 0.5 
+
+number of resolved and unresolved cases:
+
+The amount of resolved cases are 9 
+The amount of unresolved cases are 6 
+
+the category with the most cases:
+
+The category with the most amount of cases is utstyr
+
+unresolved cases sorted with the most time-consuming one first:
+
+1. ID: 13
+Category: utstyr
+Minutes: 63
+Is resolved: no
+
+2. ID: 4
+Category: utstyr
+Minutes: 55
+Is resolved: no
+
+3. ID: 10
+Category: programvare
+Minutes: 48
+Is resolved: no
+
+4. ID: 2
+Category: programvare
+Minutes: 42
+Is resolved: no
+
+5. ID: 17
+Category: utstyr
+Minutes: 39
+Is resolved: no
+
+6. ID: 7
+Category: nettverk
+Minutes: 35
+Is resolved: no

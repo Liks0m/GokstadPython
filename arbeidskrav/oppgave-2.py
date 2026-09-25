@@ -1,6 +1,5 @@
 import random
 import function as fn
-import subprocess
 
 study_session_storage = []
 study_session = {"topic": "", "duration_minutes": 0, "status": ""}
@@ -77,7 +76,7 @@ def list_study_sessions(sessions):
         print(
             f"{i}. Topic: {sessions['topic']}, "
             f"Duration: {sessions['duration_minutes']} min, "
-            f"Status: {sessions['status']}"
+            f"Status: {sessions['status']}",
         )
 
 
@@ -141,7 +140,7 @@ while True:
     completed_sessions = list_only_completed(study_session_storage)
 
     user_input = input(
-        "\n This is an menu for storing, logging and analyzing study sessions:\n 1. Register an study session\n 2. Show study sessions\n 3. Show only completed sessions\n 4. Search for an word in the topic\n 5. Sort session after duration with longest first\n 6. Shows collected and average time for completed sessions\n  7. To exit\n Please enter an value: "
+        "\n This is an menu for storing, logging and analyzing study sessions:\n 1. Register an study session\n 2. Show study sessions\n 3. Show only completed sessions\n 4. Search for an word in the topic\n 5. Sort session after duration with longest first\n 6. Shows collected and average time for completed sessions\n7. To exit\n Please enter an value: "
     )
 
     if not fn.is_int(user_input):
@@ -155,7 +154,6 @@ while True:
         continue
 
     #    https://www.reddit.com/r/learnpython/comments/1b4sk5n/how_to_clear_a_console_in_python/
-    subprocess.call("clear")
 
     if user_input == 1:
         register_study_session()
@@ -183,19 +181,15 @@ while True:
 
         print(
             "\nThe total study time duration is",
-            fn.convert_int_to_hms(collective_duration),
+            fn.convert_minutes_to_hms(collective_duration),
         )
 
         print(
-            "The average study session lasts for", fn.convert_int_to_hms(avg_duration)
+            "The average study session lasts for",
+            fn.convert_minutes_to_hms(avg_duration),
         )
 
     elif user_input == 7:
-        subprocess.call("clear")
         break
     else:
         print("Please provide input")
-
-    if user_input != 7:
-        input("\nPress enter to continue...")
-        subprocess.call("clear")

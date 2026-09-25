@@ -50,7 +50,7 @@ def field_error(support_requests):
 
         if not fn.is_positive_int(id):
             print(
-                f"The field with id-number: {id} does not contain an ID that has an postive integer"
+                f"The field with id-number: {id} does not contain an ID that has a positive integer"
             )
 
         if not fn.is_int(support_request.minutes):
@@ -115,6 +115,9 @@ def prettier_unresolved_list(sorted_list, f):
         )
 
 
+# task 4.3
+
+
 def file_writer():
     category_dict = category_counter(case_list)
     time_avg_sum = time_list(case_list)
@@ -128,26 +131,27 @@ def file_writer():
         print("\n" + "The amount of support_requests are", len(case_list), file=f)
 
         print(
-            "The amonut of cases within the category of innlogging is",
+            "The amount of cases within the category of innlogging is",
             category_dict["innlogging"],
-            "\n" + "The amonut of cases within the category of programvare is",
+            "\n" + "The amount of cases within the category of programvare is",
             category_dict["programvare"],
-            "\n" + "The amonut of cases within the category of nettverk is",
+            "\n" + "The amount of cases within the category of nettverk is",
             category_dict["nettverk"],
-            "\n" + "The amonut of cases within the category of utstyr is",
+            "\n" + "The amount of cases within the category of utstyr is",
             category_dict["utstyr"],
             "\n",
             file=f,
         )
 
         print(
-            "total and average time spent, with averages to one decimal place:", file=f
+            "total and average time spent on each completed case, with averages to one decimal place:",
+            file=f,
         )
 
         print(
-            "\nThe total time of all cases is",
+            "\nThe total time of all completed cases is",
             sum(time_avg_sum, dt.timedelta(0, 0)),
-            "\n" + "The average time of all cases in one decimal place is",
+            "\n" + "The average time of all cases in one danecimal place is",
             f"{avg_hours:.1f}",
             "\n",
             file=f,

@@ -39,7 +39,6 @@ def oppgave_1_2():
     while True:
         analyze_text = input("\nWrite an text here to be analyzed: ")
 
-        # ai recommended this fix at line 55
         if "".join(analyze_text.split()) == "":
             print("Please provide an text and not just spaces")
             continue
@@ -104,7 +103,7 @@ def oppgave_1_3():
 
 while True:
     user_input = input(
-        "\nThis is an menu for multiple programs:\n 1. for an program to calculate time usage while studying\n 2. for an text analyzer\n 3. for an time interval analyzer\n 4. to exit\n Please enter an value: "
+        "\nThis is an menu for multiple programs:\n 1. for an program to calculate time usage while studying\n 2. for an text analyzer\n 3. for an number interval analyzer\n 4. to exit\n Please enter an value: "
     )
 
     if not fn.is_int(user_input):

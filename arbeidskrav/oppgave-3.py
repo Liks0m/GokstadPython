@@ -16,15 +16,21 @@ def validate_dates(date):
         date = dt.datetime.strptime(date, "%d.%m.%Y")
         return date
     except ValueError:
-        print(f"{date} is not an valid date in the format (dd.mm.yyyy)")
+        print("\n" + f"{date} is not an valid date in the format (dd.mm.yyyy)")
+
+
+# https://www.pythonmorsels.com/datetime-arithmetic/
+
+
+def validate_time(start_time):
+    try:
+        start_time = dt.datetime.strptime(start_time, "%H:%M")
+        return start_time
+    except ValueError:
+        print("\n" + f"{start_time} is not in the format of the 24 hour clock")
 
 
 def calculate_end_time(date, start_time, duration):
-    try:
-        start_time = dt.datetime.strptime(start_time, "%H:%M")
-    except ValueError:
-        (f"{start_time} is not in the format of the 24 hour clock")
-
     combined_date = fn.sum_date_times([date, start_time])
 
     duration = dt.timedelta(minutes=duration)
@@ -34,18 +40,18 @@ def calculate_end_time(date, start_time, duration):
     return end_time
 
 
-def chronological_list(list):
-    list.sort(reverse=False)
-    return list
-
-
 def calculate_two_days(date1, date2):
     date = abs(date1 - date2)
     return date
 
 
+def chronological_list(list):
+    list.sort(reverse=False)
+    return list
+
+
 while True:
-    date_one = input("Please enter an date in the format (dd.mm.yyyy): ")
+    date_one = input("\n" + "Please enter an date in the format (dd.mm.yyyy): ")
     date_two = input("Please enter an second date in the format (dd.mm.yyyy): ")
     start_time = input("Please enter an start time with 24 hour clock format: ")
     duration = input("Please enter the duration of the study session: ")
@@ -60,24 +66,31 @@ while True:
         print(f"{duration} is not an positive integer, please try again.")
         continue
 
-    if validate_dates(date_one):
-        date_one = validate_dates(date_one)
+    if not validate_dates(date_one):
+        continue
 
-    if validate_dates(date_two):
-        date_two = validate_dates(date_two)
+    if not validate_dates(date_two):
+        continue
+
+    if not validate_time(start_time):
+        continue
+
+    date_one = validate_dates(date_one)
+    date_two = validate_dates(date_two)
+    start_time = validate_time(start_time)
 
     print(
-        "This function takes start time and duration and calculates end time:\n",
+        "\nThis function takes start time and duration and calculates end time:\n",
         calculate_end_time(date_one, start_time, duration),
     )
 
     print(
-        "This function takes two dates and calculates an positive amount of dates between the dates:\n",
+        f"\nThis function takes two dates and calculates an positive amount of dates between the two date {date_one:%d.%m.%Y} and {date_two:%d.%m.%Y}:\n",
         calculate_two_days(date_one, date_two),
     )
 
     print(
-        "This list takes an list with dates and returns an chronologically sorted list of dates:\n",
+        "\nThis list takes an list with dates and returns an chronologically sorted list of dates:\n",
         chronological_list(date_list),
     )
     break

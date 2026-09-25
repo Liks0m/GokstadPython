@@ -35,7 +35,7 @@ def desending_list(sessions):
     return desending_list
 
 
-def convert_int_to_hms(value):
+def convert_minutes_to_hms(value):
     value = float(value)
     seconds = value * 60
     m, s = divmod(seconds, 60)
