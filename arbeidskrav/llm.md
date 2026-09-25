@@ -52,6 +52,18 @@ Notes:
 | `oppgave-4.py` | 107-115 | 38, 39, 40 |
 | `oppgave-4.py` | 118-182 (`file_writer`) | 34, 39 |
 | `oppgave-4.py` | 174 | 35 |
+| `oppgave-4.py` | 53, 134-140 (typo fixes) | 48 (AI edited) |
+| `function.py` | 38 (name of `convert_minutes_to_hms`) | 41 |
+| `oppgave-3.py` | 28, 30 | 44 |
+| `oppgave-3.py` | 88 | 45 (AI edited) |
+| `README.md` | 141-154 (Task 3 section layout) | 42 (AI edited, rewritten by me) |
+| `README.md` | 156-167 (Task 3 test cases) | 43 |
+| `README.md` | 171-188 (Task 3 example run) | 46 |
+| `README.md` | 196-354 (Task 4 section) | 47 (AI edited, partly rewritten by me) |
+| `README.md` | whole file (spelling and formatting) | 49 (AI edited) |
+| `README.md` | 394 (Sources) | 50 (AI edited) |
+| `README.md` | 32, 404-411 (Code standard) | 51 (AI edited) |
+| `README.md` | 34, 362-372 (Task 6 and Git history) | 52 (AI edited) |
 
 The source comment at `oppgave-1.py:42` says "ai recommended this fix at line 55". The fix is now on line 43, because the file has been restructured since then (see entry 10).
 
@@ -2771,6 +2783,875 @@ f"Is resolved: {request.is_resolved}\n\n"
 ```
 
 The `\n\n` at the end gives a blank line between cases, and it means the file always ends with a newline. If you used `print(..., file=f)`, this happens automatically, because `print` adds a newline itself.
+
+</details>
+
+---
+
+# Follow-up: `function.py`
+
+Entries 41-52 are from 2026-09-25, when I finished tasks 3 and 4 and cleaned up the README.
+
+## 41. Should `convert_int_to_hms` use a timedelta? (2026-09-25)
+
+**Used in:** `function.py:38`. I renamed the function to `convert_minutes_to_hms` as suggested, but I kept my own body with `divmod` instead of the rewritten version (see Known limitations for Task 2 in the README).
+
+**Prompt:**
+> ```python
+> def convert_int_to_hms(value):
+>     value = float(value)
+>     seconds = value * 60
+>     m, s = divmod(seconds, 60)
+>     s = round(s)
+>     h, m = divmod(m, 60)
+>     a = "%dh:%02dm:%02ds" % (h, m, s)
+>     return a
+> ```
+>
+> should this function be converted into an time delta
+
+<details><summary>Response</summary>
+
+**Short answer: you don't need `timedelta` for this.** Changing it wouldn't fix anything, and you'd still need your own formatting, because `str(timedelta)` gives `1:05:30`, not `1h:05m:30s`. It would also start printing `1 day, ...` once the value reaches 24 hours.
+
+There is a bug worth fixing, though. You round the seconds *after* splitting, so values just under a whole minute go wrong:
+
+```python
+convert_int_to_hms(0.9999)   # -> "0h:00m:60s"  (should be "0h:01m:00s")
+```
+
+The fix is to round the total number of seconds first, then split it:
+
+```python
+def convert_minutes_to_hms(minutes):
+    total_seconds = round(float(minutes) * 60)
+    h, rest = divmod(total_seconds, 3600)
+    m, s = divmod(rest, 60)
+    return f"{h}h:{m:02d}m:{s:02d}s"
+```
+
+I also renamed the function, because it takes **minutes** (floats too), not an int.
+
+**When `timedelta` is worth it:** if you keep durations around as values and do math on them (adding times together, comparing, subtracting from a `datetime`). In that case, store a `timedelta` and only call a formatting function like the one above when you print it:
+
+```python
+from datetime import timedelta
+d = timedelta(minutes=95.5)
+convert_minutes_to_hms(d.total_seconds() / 60)  # "1h:35m:30s"
+```
+
+If this function only turns a number into a display string, the plain `divmod` version is simpler and fine.
+
+</details>
+
+---
+
+# Follow-up: Task 3, `oppgave-3.py`
+
+## 42. Draft analysis of Task 3 in the README (2026-09-25)
+
+**Used in:** `README.md:141-154`. The layout of the Task 3 section and the Sub-task and Function columns of the table come from this draft. I rewrote the descriptions in my own words. The AI inserted the draft into the README in prompt 2 (AI edited).
+
+**Prompt 1:**
+> make an mockup for task 3 but do not edit the README.md
+
+<details><summary>Response 1</summary>
+
+I ran `oppgave-3.py` on a copy in a temporary folder, once with valid input and twice with invalid input. `README.md` is unchanged. Below is a draft you can paste over the Task 3 section when you're ready. Like the Task 4 one, it's written in first person so you can rewrite it in your own words.
+
+````markdown
+## Task 3 – study activity planner
+
+<!-- MOCK-UP: draft analysis, rewrite in your own words before submitting -->
+
+**File:** `oppgave-3.py`
+
+**Summary:** task 3 is an activity planner that works with dates and times. The user enters two dates, a start time and a duration, and the program works out when the study session ends, how many days there are between the two dates, and sorts a list of dates in chronological order. The task was also about learning how to read documentation and use a standard library (`datetime`).
+
+| Sub-task | Function | Description |
+|---|---|---|
+| 3.1 Validate date | `validate_dates()` | uses `dt.datetime.strptime(date, "%d.%m.%Y")` to turn the text into a `datetime`. if the text is not a valid date (like `31.02.2026`) `strptime` raises `ValueError`, which is caught and a message is printed |
+| 3.2 Calculate end time | `calculate_end_time()` | turns the start time into a `datetime` with `strptime(start_time, "%H:%M")`, joins the date and the time with `fn.sum_date_times()` and adds the duration as a `dt.timedelta(minutes=duration)` |
+| 3.3 Days between two dates | `calculate_two_days()` | subtracts one date from the other, which gives a `timedelta`. `abs()` makes sure the answer is positive no matter which date comes first |
+| 3.4 Sort dates | `chronological_list()` | sorts the list `date_list` with `list.sort()`. `datetime` objects can be compared directly, so no `key` is needed |
+| Input loop | module level `while True` | asks for all the input, validates the duration with `fn.is_int()` and `fn.is_positive_int()` and uses `continue` to start again if it is not valid |
+
+**Combining a date and a time:** `strptime("14:30", "%H:%M")` gives a `datetime` on 1900-01-01 at 14:30. `fn.sum_date_times()` subtracts `BASE_DATE` (1900-01-01) from both the date and the time, adds the two `timedelta`s together and then adds `BASE_DATE` back, so the result is the chosen date at 14:30.
+
+**Input validation:** the duration is checked the same way as in task 1 and 2, with `fn.is_int()` and `fn.is_positive_int()`. For dates and times i used `try/except ValueError` instead, because `strptime` already knows which dates exist (leap years, 30 or 31 days and so on). Writing all of that myself with `if` checks would be a lot more code.
+
+**Libraries used:** `datetime` (`datetime`, `strptime`, `timedelta`), plus `sum_date_times()` from `function.py`.
+
+**Example run:**
+
+```
+Please enter an date in the format (dd.mm.yyyy): 24.09.2026
+Please enter an second date in the format (dd.mm.yyyy): 01.10.2026
+Please enter an start time with 24 hour clock format: 14:30
+Please enter the duration of the study session: 90
+This function takes start time and duration and calculates end time:
+ 2026-09-24 16:00:00
+This function takes two dates and calculates an positive amount of dates between the dates:
+ 7 days, 0:00:00
+This list takes an list with dates and returns an chronologically sorted list of dates:
+ [datetime.datetime(1900, 7, 18, 0, 0), datetime.datetime(2004, 3, 22, 0, 0), ...]
+```
+
+**Known limitations:**
+
+- if a date is not valid, `validate_dates()` prints an error but the loop does not `continue`. The date is still a string, so the program crashes in `sum_date_times()` with `TypeError`.
+- the same thing happens with an invalid start time (like `25:00`). On line 29 the error message is missing `print(...)`, so nothing is shown and the program crashes.
+- `validate_dates()` is called twice for each date, so an invalid date prints the error message twice.
+- the duration is checked before the dates, so the user has to type everything again if only the duration is wrong.
+- the sorted list is printed as raw `datetime` objects. `strftime("%d.%m.%Y %H:%M")` would be easier to read.
+- the date list is hardcoded and not entered by the user.
+- `chronological_list()` uses `list` as a parameter name, which hides Python's built-in `list`.
+````
+
+Things to check before you use it:
+- **Sub-task numbers:** I numbered them 3.1–3.4 myself. Change them to match the assignment if they're different.
+- **Contents link:** the heading here is "study activity planner", but the link in Contents still points to "Functions and Documention". Make them match or the link won't work.
+- **Validation style:** this task uses `try/except`, while your other tasks use `if` checks. I wrote a short reason for that, because a reviewer might ask.
+- **Bugs:** the two crashes (invalid date and invalid time) are real. I got a `TypeError` both times I tested. You could fix them in the code, or just leave them listed as limitations.
+
+</details>
+
+**Prompt 2:**
+> send it into README.md
+
+<details><summary>Response 2</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I added the Task 3 draft to `README.md`, replacing the old placeholder section at `README.md:140`. The rest of the file is unchanged. It starts with the same `<!-- MOCK-UP -->` reminder as Task 4, so delete that line once you've rewritten it in your own words.
+
+Since you changed the date check, I tested the new version and changed the draft to match:
+- **First date:** an invalid first date now makes the program ask again, as it should.
+- **Second date:** there's a new bug on line 66. The check reads `not validate_dates(date_one) or not validate_dates(date_one)`, so it tests the first date twice and never tests the second. When I entered `31.02.2026` as the second date, the program crashed with a `TypeError`. Changing the second `date_one` to `date_two` should fix it. For now it's listed under Known limitations.
+- **Invalid start time:** this is still listed as a limitation. Line 29 is missing `print(...)`, so no error message is shown, and a time like `25:00` makes the program crash with a `TypeError`.
+
+The Contents link still points to "Task 3 - Functions and Documention", which doesn't match the heading, so the link won't jump to the section until the two match.
+
+</details>
+
+**Prompt 3:**
+> make an task 3 list without the describiton only with function and subtask name but do not edit README.md
+
+<details><summary>Response 3</summary>
+
+Here's the Task 3 table with only the sub-task and function columns. I haven't changed `README.md`.
+
+```markdown
+| Sub-task | Function |
+|---|---|
+| 3.1 Validate date | `validate_dates()` |
+| 3.2 Calculate end time | `calculate_end_time()` |
+| 3.3 Days between two dates | `calculate_two_days()` |
+| 3.4 Sort dates | `chronological_list()` |
+| Input loop | module level `while True` |
+```
+
+</details>
+
+---
+
+## 43. Documenting six test cases for Task 3 (2026-09-25)
+
+**Used in:** `README.md:156-167` (the Test cases table). I set the pass column myself.
+
+**Prompt 1:**
+> Lever oppgave-3.py. Dokumenter minst seks gyldige og ugyldige testtilfeller i README.md. do not edit any thing just explain
+
+<details><summary>Response 1</summary>
+
+I didn't edit anything. I ran `oppgave-3.py` with different inputs so the explanation below is based on how the program actually behaves.
+
+## What the assignment is asking
+
+*"Lever oppgave-3.py. Dokumenter minst seks gyldige og ugyldige testtilfeller i README.md"* means: hand in `oppgave-3.py` as your solution, and write down at least six test cases in the Task 3 section of `README.md`. Include both valid inputs (the program should accept them and give the right result) and invalid inputs (the program should reject them with a clear message). Aim for at least six in total and a few of each kind, so it's clear you tested the error paths as well as the normal ones.
+
+Each test case usually needs four things:
+
+| What you entered | What you expected | What actually happened | Pass/fail |
+|---|---|---|---|
+
+## Test cases I ran on your current code
+
+**Valid inputs**
+
+| Input | Result |
+|---|---|
+| `24.12.2026`, `01.01.2026`, `14:30`, `90` | End time `2026-12-24 16:00:00`, difference `357 days, 0:00:00` ✅ |
+| Same, but start time `23:30`, `90` | End time goes past midnight: `2026-12-25 01:00:00` ✅ |
+| `29.02.2024` (leap year), `01.03.2024`, `00:00`, `1` | `2024-02-29 00:01:00`, `1 day, 0:00:00` ✅ |
+
+**Invalid inputs**
+
+| Input | Result |
+|---|---|
+| Date `31.02.2026` (a day that doesn't exist) | `31.02.2026 is not an valid date in the format (dd.mm.yyyy)`, then it asks again ✅ |
+| Date `2026-12-24` (wrong format) | Rejected with the same message ✅ |
+| Duration `abc` | `abc is not an integer, please try again.` ✅ |
+| Duration `0` or `-5` | `... is not an positive integer, please try again.` ✅ |
+| Start time `25:00` | ❌ **The program crashes** with `TypeError: unsupported operand type(s) for -: 'str' and 'datetime.datetime'` |
+
+## Problems to know about before you document
+
+1. **An invalid start time crashes the program** (`oppgave-3.py:26-29`). The `except` block only contains `(f"...")`, so nothing is printed and nothing is returned. `start_time` stays a string and crashes later in `fn.sum_date_times`. Either fix this before handing in, or list it as a failing test case under "Known limitations". Following your usual style, you could check the start time in the main loop and `continue` if it's wrong, just like you do for `duration`.
+2. **All four inputs are asked for again after any error.** If only the duration is wrong, the user still has to re-enter both dates and the start time. That's fine to mention as a limitation.
+3. **The date difference is printed as a timedelta** (`357 days, 0:00:00`). If the task wants just the number of days, `.days` gives you `357`.
+4. **`chronological_list` always sorts the hardcoded `date_list`**, not the dates the user typed in. Mention this so the example output makes sense.
+5. **A small README fix:** the 3.2 row stops mid-sentence ("You cannot combine"), and rows 3.3, 3.4 and "Input loop" are still empty.
+
+## Where to put it in the README
+
+In the Task 3 section, after the function table, add a heading like **"Test cases"** with the table above. Then fill in **Example run** with one of the valid runs, for example the `24.12.2026 / 14:30 / 90` one.
+
+If you'd like, I can write the section into `README.md` or fix the start-time crash. Just say which.
+
+</details>
+
+**Prompt 2:**
+> make an test list for 6 test cases and write the markdown here and do not edit readme.md nor oppgave-3.py
+
+<details><summary>Response 2</summary>
+
+Here's a 6-case test list you can paste into `README.md` yourself. The results are copied from the runs I did earlier. I haven't edited any files.
+
+```markdown
+### Test cases
+
+Each test was run with `python3 oppgave-3.py`. The four inputs are entered in this order: first date, second date, start time and duration.
+
+| # | Type | Input (date 1, date 2, start time, duration) | Expected result | Actual result | Pass |
+|---|---|---|---|---|---|
+| 1 | Valid | `24.12.2026`, `01.01.2026`, `14:30`, `90` | End time 16:00 the same day, 357 days between the dates | `2026-12-24 16:00:00` and `357 days, 0:00:00` | ✅ |
+| 2 | Valid (past midnight) | `24.12.2026`, `01.01.2026`, `23:30`, `90` | End time moves to the next day | `2026-12-25 01:00:00` | ✅ |
+| 3 | Valid (leap year) | `29.02.2024`, `01.03.2024`, `00:00`, `1` | 29 February is accepted, 1 day between the dates | `2024-02-29 00:01:00` and `1 day, 0:00:00` | ✅ |
+| 4 | Invalid date | `31.02.2026`, `01.01.2026`, `14:30`, `90` | Date is rejected and the user is asked again | `31.02.2026 is not an valid date in the format (dd.mm.yyyy)` | ✅ |
+| 5 | Invalid date format | `2026-12-24`, `01.01.2026`, `14:30`, `90` | Wrong format is rejected and the user is asked again | `2026-12-24 is not an valid date in the format (dd.mm.yyyy)` | ✅ |
+| 6 | Invalid duration | `24.12.2026`, `01.01.2026`, `14:30`, `abc` / `0` / `-5` | Duration is rejected and the user is asked again | `abc is not an integer, please try again.` / `0 is not an positive integer, please try again.` / `-5 is not an positive integer, please try again.` | ✅ |
+
+**Note:** an invalid start time such as `25:00` is not handled yet. The program crashes with `TypeError: unsupported operand type(s) for -: 'str' and 'datetime.datetime'` because the `except` block in `calculate_end_time()` does not print or return anything. This is listed under known limitations.
+```
+
+The messages in the "Actual result" column are copied exactly as the program prints them, including "an valid", so they match what someone will see if they run the tests again. The note at the bottom only makes sense if you still have the `25:00` crash when you hand in. If you fix it first, you can swap case 6 for an invalid start time test instead.
+
+</details>
+
+**Prompt 3:**
+> dont add check mark emoji nut markdown check like [x]
+
+<details><summary>Response 3</summary>
+
+Here's the same table with `[x]` in place of the emoji:
+
+```markdown
+### Test cases
+
+Each test was run with `python3 oppgave-3.py`. The four inputs are entered in this order: first date, second date, start time and duration.
+
+| # | Type | Input (date 1, date 2, start time, duration) | Expected result | Actual result | Pass |
+|---|---|---|---|---|---|
+| 1 | Valid | `24.12.2026`, `01.01.2026`, `14:30`, `90` | End time 16:00 the same day, 357 days between the dates | `2026-12-24 16:00:00` and `357 days, 0:00:00` | [x] |
+| 2 | Valid (past midnight) | `24.12.2026`, `01.01.2026`, `23:30`, `90` | End time moves to the next day | `2026-12-25 01:00:00` | [x] |
+| 3 | Valid (leap year) | `29.02.2024`, `01.03.2024`, `00:00`, `1` | 29 February is accepted, 1 day between the dates | `2024-02-29 00:01:00` and `1 day, 0:00:00` | [x] |
+| 4 | Invalid date | `31.02.2026`, `01.01.2026`, `14:30`, `90` | Date is rejected and the user is asked again | `31.02.2026 is not an valid date in the format (dd.mm.yyyy)` | [x] |
+| 5 | Invalid date format | `2026-12-24`, `01.01.2026`, `14:30`, `90` | Wrong format is rejected and the user is asked again | `2026-12-24 is not an valid date in the format (dd.mm.yyyy)` | [x] |
+| 6 | Invalid duration | `24.12.2026`, `01.01.2026`, `14:30`, `abc` / `0` / `-5` | Duration is rejected and the user is asked again | `abc is not an integer, please try again.` / `0 is not an positive integer, please try again.` / `-5 is not an positive integer, please try again.` | [x] |
+
+**Note:** an invalid start time such as `25:00` is not handled yet. The program crashes with `TypeError: unsupported operand type(s) for -: 'str' and 'datetime.datetime'` because the `except` block in `calculate_end_time()` does not print or return anything. This is listed under known limitations.
+```
+
+GitHub only draws `[x]` as a checkbox at the start of a list item. Inside a table it shows up as plain text: `[x]`. If you want real checkboxes, you can add a list like this under the table:
+
+```markdown
+- [x] Test 1 – valid input
+- [x] Test 2 – valid, past midnight
+- [x] Test 3 – valid, leap year
+- [x] Test 4 – invalid date
+- [x] Test 5 – invalid date format
+- [x] Test 6 – invalid duration
+```
+
+</details>
+
+---
+
+## 44. `validate_time()` returns `None` (2026-09-25)
+
+**Used in:** `oppgave-3.py:28` (`return start_time`) and `oppgave-3.py:30` (`"\n"` instead of `"n"`). I made both fixes myself after the explanation.
+
+**Prompt 1:**
+> test if oppgave-3.py works
+
+<details><summary>Response 1</summary>
+
+**No. Right now `oppgave-3.py` never gets to the results, even when every input is valid.** You changed the file since last time: the new `validate_time()` stopped the `25:00` crash, but it also added a new bug.
+
+## The bug
+
+`validate_time()` at `oppgave-3.py:25-29` never returns anything:
+
+```python
+def validate_time(start_time):
+    try:
+        start_time = dt.datetime.strptime(start_time, "%H:%M")
+        # no return here, so the function gives back None
+    except ValueError:
+        print("n" + f"{start_time} is not in the format of the 24 hour clock")
+```
+
+A Python function that doesn't `return` gives back `None`. So `if not validate_time(start_time):` at line 74 is always true, and the loop always hits `continue`. The program keeps asking for input and never prints a result. In my tests it only stopped because it ran out of input (`EOFError`). In a real terminal it would ask forever.
+
+The fix is one line under the `strptime` line, the same pattern you already use in `validate_dates()`:
+
+```python
+        return start_time
+```
+
+## Results with that one line added
+
+I tested a copy in my scratch folder with the `return` added. Your real file is unchanged.
+
+| # | Test | Result |
+|---|---|---|
+| 1 | Valid: `24.12.2026`, `01.01.2026`, `14:30`, `90` | `2026-12-24 16:00:00`, `357 days, 0:00:00`: passed |
+| 2 | Past midnight: `23:30`, `90` | `2026-12-25 01:00:00`: passed |
+| 3 | Leap year: `29.02.2024`, `01.03.2024`, `00:00`, `1` | `2024-02-29 00:01:00`, `1 day, 0:00:00`: passed |
+| 4 | Invalid date `31.02.2026` | Rejected, asks again: passed |
+| 5 | Wrong format `2026-12-24` | Rejected, asks again: passed |
+| 6 | Duration `abc` / `0` | Rejected, asks again: passed |
+| extra | Start time `25:00` | Rejected, asks again, no crash anymore: passed |
+
+So with that one line added, all 6 test cases pass, and the `25:00` crash is fixed. You can drop the `25:00` note from the test table.
+
+## Small extra issue
+
+On line 29 you wrote `"n"` where you meant `"\n"`. Because of that, the error message comes out as `n25:00 is not in the format...`.
+
+I haven't changed anything in your files. Should I add the `return` line and fix the `\n`?
+
+</details>
+
+**Prompt 2:**
+> try to run one valid example now and give me the output
+
+<details><summary>Response 2</summary>
+
+It works now. You added the `return start_time` and fixed the `\n`, and the valid example runs to the end without errors.
+
+I entered `24.12.2026`, `01.01.2026`, `14:30` and `90`, and this is the output. The typed answers are filled in to show what it looks like in a real terminal:
+
+```
+Please enter an date in the format (dd.mm.yyyy): 24.12.2026
+Please enter an second date in the format (dd.mm.yyyy): 01.01.2026
+Please enter an start time with 24 hour clock format: 14:30
+Please enter the duration of the study session: 90
+
+This function takes start time and duration and calculates end time:
+ 2026-12-24 16:00:00
+
+This function takes two dates and calculates an positive amount of dates between the two date 2026-12-24 00:00:00 and 2026-01-01 00:00:00:
+ 357 days, 0:00:00
+
+This list takes an list with dates and returns an chronologically sorted list of dates:
+ [datetime.datetime(1900, 7, 18, 0, 0), datetime.datetime(2004, 3, 22, 0, 0), datetime.datetime(2020, 3, 12, 12, 36, 9), datetime.datetime(2026, 8, 28, 6, 35), datetime.datetime(2066, 10, 24, 12, 36, 9)]
+```
+
+The results are correct: 14:30 plus 90 minutes is 16:00, and there are 357 days between the two dates. You can paste this into the **Example run** block for Task 3 in the README.
+
+</details>
+
+---
+
+## 45. Formatting the dates on line 88 (2026-09-25)
+
+**Used in:** `oppgave-3.py:88` (AI edited).
+
+**Prompt:**
+> add an date formatter to line 88
+
+<details><summary>Response</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I added a date format to line 88, so the two dates now print in the same `dd.mm.yyyy` format the user types in:
+
+```python
+f"...between the two date {date_one:%d.%m.%Y} and {date_two:%d.%m.%Y}:\n",
+```
+
+I ran the valid example again, and the line now prints:
+
+```
+Before: ...between the two date 2026-12-24 00:00:00 and 2026-01-01 00:00:00:
+After:  ...between the two date 24.12.2026 and 01.01.2026:
+```
+
+The `:%d.%m.%Y` part after the variable name inside `{}` is a format code. It works the same way as `strptime` in `validate_dates()`, but in the other direction: it turns a date back into text. The Python docs list it under `strftime` in the [datetime](https://docs.python.org/3/library/datetime.html) page you already cite.
+
+If you pasted the example output into the README, update that line there too.
+
+</details>
+
+---
+
+## 46. Running a new valid test (2026-09-25)
+
+**Used in:** `README.md:171-188` (Example run for Task 3).
+
+**Prompt:**
+> run an neww test with valid answer
+
+<details><summary>Response</summary>
+
+The new valid test passed. This time the first date is earlier than the second, the opposite order from the last test.
+
+```
+Please enter an date in the format (dd.mm.yyyy): 15.05.2026
+Please enter an second date in the format (dd.mm.yyyy): 01.09.2026
+Please enter an start time with 24 hour clock format: 08:15
+Please enter the duration of the study session: 45
+
+This function takes start time and duration and calculates end time:
+ 2026-05-15 09:00:00
+
+This function takes two dates and calculates an positive amount of dates between the two date 15.05.2026 and 01.09.2026:
+ 109 days, 0:00:00
+
+This list takes an list with dates and returns an chronologically sorted list of dates:
+ [datetime.datetime(1900, 7, 18, 0, 0), datetime.datetime(2004, 3, 22, 0, 0), datetime.datetime(2020, 3, 12, 12, 36, 9), datetime.datetime(2026, 8, 28, 6, 35), datetime.datetime(2066, 10, 24, 12, 36, 9)]
+```
+
+Both results are correct:
+- **End time:** 08:15 plus 45 minutes is 09:00.
+- **Days between:** 16 days left in May, then 30 in June, 31 in July, 31 in August and 1 into September, which adds up to 109. The result is positive even though the second date is later, so `abs()` in `calculate_two_days()` works.
+- **Date format:** the dates on the "between" line now show as `15.05.2026` and `01.09.2026`.
+
+The end time on the first result still prints as `2026-05-15 09:00:00`. If you want that one in the same style as well, use a format like `%d.%m.%Y %H:%M`.
+
+</details>
+
+---
+
+# Follow-up: Task 4, `oppgave-4.py`
+
+## 47. Draft analysis of Task 4 in the README (2026-09-25)
+
+**Used in:** `README.md:196-354`. The AI wrote the draft straight into the README (AI edited). I rewrote the summary and the function table in my own words. The Handling invalid rows table, the terminal output, the example report and most of the Known limitations list are kept from the draft.
+
+**Prompt:**
+> in README.md write an analysis about oppgave-4.py in the task 4 section do not edit only write an mock up
+
+<details><summary>Response</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I filled in the Task 4 section of `README.md` with a draft analysis. I didn't change `oppgave-4.py`. To get a real example report without overwriting anything, I ran the program on a copy in a temporary folder, so no `support_rapport.txt` was created in your project.
+
+**What's in the section:**
+- **Title:** "Files, Error Handling and Troubleshooting".
+- **Summary:** what the program does, plus a note on why a `@dataclass` works well with `csv.DictReader` (`SupportRequest(**row)`).
+- **Function table:** each function mapped to its sub-task (4.1 reading and validating, 4.2 analysis, 4.3 writing the report).
+- **Handling invalid rows:** a table of the 5 bad rows (ids 6, 8, 12, 15 and -19) with the problem in each and which check catches it, plus the real terminal output. It also notes that you validate with `if` checks instead of `try/except`, which matches how you usually write it.
+- **Libraries used:** `csv`, `dataclasses`, `collections.Counter` and `datetime.timedelta`.
+- **Example report:** a shortened copy of the real output from the test run.
+
+**Known limitations I found while reading the code:**
+- In `field_error()`, `id` is only set when the id is a number. A row with an id like `abc` would print the previous row's id, or crash if it's the first row.
+- `field_error()` gives no message for negative `minutes`. The row is still removed, but the user isn't told why.
+- The average is shown in hours (`0.5`) without saying so. In minutes it's about 31.1.
+- The four category names are written directly into `file_writer()`, so a new category in the CSV wouldn't show up in the report.
+- All the code runs at the top level of the file. There's no `main()` with `if __name__ == "__main__":`.
+- If every row were invalid, working out the average would crash with a `ZeroDivisionError`.
+- There are typos in the report text (`amonut`, `postive`).
+
+The section starts with a `<!-- MOCK-UP -->` comment as a reminder to rewrite it in your own words. Delete that line when you're done.
+
+</details>
+
+---
+
+## 48. Fixing typos in the report text (2026-09-25)
+
+**Used in:** `oppgave-4.py:53` and `oppgave-4.py:134-140` (AI edited). I first asked for a revert (prompt 2) and then asked for the fix again (prompt 3). An interrupted prompt in between is left out.
+
+**Prompt 1:**
+> fix the typos in oppgave-4.py
+
+<details><summary>Response 1</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I fixed the typos in `oppgave-4.py`:
+
+- **`amonut` → `amount`:** this was in all four category lines of the report (lines 134–140).
+- **`an postive integer` → `a positive integer`:** this was in the error message for a negative id (line 53).
+
+I also changed the example output in the Task 4 section of `README.md` so it shows the corrected text. I removed the "spelling mistakes" item from Known limitations there too, since it's fixed now. I didn't rerun the program after the fix, because I only changed text inside the messages.
+
+</details>
+
+**Prompt 2:**
+> can you revert the changes and bring task-3 back in the README
+
+<details><summary>Response 2</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I undid the typo fixes, and I also found that the Task 3 section is still in the README, so I'm not sure what's missing there.
+
+**The revert:** `oppgave-4.py` and the Task 4 section of `README.md` are back to how they were before, typos included (`amonut`, `postive`). The "spelling mistakes" item is back in Known limitations too. The only difference left between `oppgave-4.py` and your last commit is the `# task 4.3` comment, which you had added before I started.
+
+**Task 3:** the section at `README.md:140` looks exactly as it did before I touched anything. It has the summary, the placeholder table, the libraries line and the placeholders for the example run and limitations. I never edited it. One thing that might look broken is the Contents link: it says "Task 3 - Functions and Documention", but the heading is "Task 3 – study activity planner", so clicking the link won't jump to the section. It was already like that before I made any changes.
+
+What did you mean by bringing Task 3 back? I could:
+- fix the Contents link so it matches the heading,
+- write a draft analysis of `oppgave-3.py` like the one for Task 4, or
+- restore an older version of the section. If so, tell me where it's from, since `README.md` isn't in git so there's no history for me to look at.
+
+</details>
+
+**Prompt 3:**
+> fix the typos
+
+<details><summary>Response 3</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I fixed the typos again, and a search finds no `amonut` or `postive` left in either file.
+
+- **`oppgave-4.py`:** `amonut` → `amount` in the four category lines, and `an postive integer` → `a positive integer` in the error message for a negative id.
+- **`README.md`:** the example output in Task 4 now shows the corrected text, and I removed the "spelling mistakes" item from Known limitations.
+
+</details>
+
+---
+
+# `README.md`
+
+## 49. Spelling and formatting in the README (2026-09-25)
+
+**Used in:** The whole `README.md` (AI edited). Prompt 1 only showed a plan and a diff. Prompt 2 applied it, and prompt 3 fixed the items the AI had listed but not changed.
+
+**Prompt 1:**
+> withotut editing any file! double check the README.md and only format and check for spelling mistakes. Do not change my language or texts! only format and spelling mistakes show me the plan and diff here
+
+<details><summary>Response 1</summary>
+
+I haven't edited any files. To build the diff, I made a corrected copy in the scratchpad and compared it with your original. Your `README.md` hasn't changed. I only fixed spelling mistakes and formatting. Your wording, sentence structure and the example program output are exactly as you wrote them.
+
+## Plan
+
+1. **Spelling mistakes:** fix typos and misspelled words, including module names written wrong (`timedate` → `datetime`, `.striptime` → `.strptime`). I also changed a lone lowercase `i` to `I`.
+2. **Formatting:**
+   - Remove trailing spaces and extra blank lines.
+   - Add the missing closing `|` on some table rows.
+   - Use the same code block tag everywhere (`txt`).
+   - Remove a stray `>` line.
+   - Add blank lines so the File/Input/Output lines and "Example run" show as separate lines.
+   - Fix the broken Task 3 link in the Contents list.
+3. **Left alone on purpose:** grammar and wording (see the list at the end).
+
+## Diff (line numbers are from your original)
+
+```diff
+@@ 1-3 @@  (trailing space + extra blank line)
+-# Ludvig Bjune Hopen 
+-
+-
++# Ludvig Bjune Hopen
++
+@@ 4 @@
+-backend-devlopment
++backend-development
+@@ 12 @@  (link pointed to a heading that doesn't exist)
+-- [Task 3 - Functions and Documention](#task-3--functions-and-documention)
++- [Task 3 – study activity planner](#task-3--study-activity-planner)
+@@ 34-35, 101-102, 195-196, 232-233, 282-288, 361-362 @@
+  (collapse double/triple blank lines to one)
+@@ 48-49 @@
+-> **Note:** ... must be run from `arbeidskrav/`.
+->
++> **Note:** ... must be run from `arbeidskrav/`.
+@@ 61 @@
+-...the user has had  and ... asks how low you have studied
++...the user has had and ... asks how long you have studied
+@@ 62 @@
+-it also prints the tect in lower case ... the word python  |
++it also prints the text in lower case ... the word python |
+@@ 66 @@
+-for input validation i built ... uses is.digit ... so that is_postivie_int
++for input validation I built ... uses isdigit ... so that is_positive_int
+@@ 68 @@
+-I choose to use if else ... i can use ... where i check ... not an postivie int. i also ... if/ese loops ... tests i made
++I chose to use if else ... I can use ... where I check ... not an positive int. I also ... if/else loops ... tests I made
+@@ 72, 116, 171, 311 @@
+-``` txt
++```txt
+@@ 88 @@
+-that i used alot of AI but i also tried looking
++that I used a lot of AI but I also tried looking
+@@ 98 @@
+-**Data structure:**  a list ... each field is an key aand the values
++**Data structure:** a list ... each field is an key and the values
+@@ 100 @@
+-i choose ... good re usablity. i did not ... sessions i have found ... no reusablity ... so i aim for good re usablity. with an class i can ... "field" i want ... i choose ... structure i already have
++I choose ... good reusability. I did not ... sessions I have found ... no reusability ... so I aim for good reusability. with an class I can ... "field" I want ... I choose ... structure I already have
+@@ 106 @@
+-makes an formated list
++makes an formatted list
+@@ 107, 108, 109 @@
+-underlaying
++underlying
+@@ 108 @@
+-...prompted by an input|
++...prompted by an input |
+@@ 109 @@
+-"duration_minutes" and the looks at
++"duration_minutes" and then looks at
+@@ 110 @@
+-| 6. shows collected ... sessions| ... seconds.I then ... with 60  then i use ... then i use string
++| 6. shows collected ... sessions | ... seconds. I then ... with 60 then I use ... then I use string
+@@ 113-114 @@  (missing blank line before heading)
+-...being ran thru an if not ... For duration minutes i use the funcution i made ...
++...being ran through an if not ... For duration minutes I use the function I made ...
++
+ **Example run:**
+@@ 135 @@
+-i could have ... mini programs exists ... the program  wwould not ... i could also ... but i left it
++I could have ... mini programs exits ... the program would not ... I could also ... but I left it
+@@ 139 @@
+-## Task 3 – study activity planner  
++## Task 3 – study activity planner
+@@ 143 @@
+-time and timedate is in focus ... an standard libary.
++time and datetime is in focus ... an standard library.
+@@ 146 @@
+-|---|---|---| 
++|---|---|---|
+@@ 147 @@
+-try execpt ... .striptime takes ... the regualur datetime ... why the  .striptime ... as the execpt
++try except ... .strptime takes ... the regular datetime ... why the .strptime ... as the except
+@@ 148 @@  (missing closing pipe)
+-...uses the same try execpt ... not a 24 hour clock format
++...uses the same try except ... not a 24 hour clock format |
+@@ 149 @@
+-date and time, IT stores the combine datetime
++date and time, It stores the combined datetime
+@@ 150 @@
+-uses the timedate function called abs ... date1 by date2. | 
++uses the datetime function called abs ... date1 by date2. |
+@@ 151 @@
+-the function returns list | 
++the function returns list |
+@@ 152 @@
+-which i use in some way ... into an timedate object ... calculate_end_time , calculate_two_days
++which I use in some way ... into an datetime object ... calculate_end_time, calculate_two_days
+@@ 167 @@
+-the only standard libary being used
++the only standard library being used
+@@ 188-190 @@
+-**Known limitations:** 
+-1. ... is not premitted since ...
+-2. ... but i deemed it not relevant for the task. 
++**Known limitations:**
++1. ... is not permitted since ...
++2. ... but I deemed it not relevant for the task.
+@@ 197-199 @@  (these rendered as one run-on line)
+ **File:** `oppgave-4.py`
++
+ **Input:** `supporthenvendelser.csv`
++
+ **Output:** `support_rapport.txt`
+@@ 203 @@  (trailing space)
+@@ 207 @@
+-the csv i first need ... defined in  the data ... For all acts and intends ... empty list.|
++the csv I first need ... defined in the data ... For all acts and intents ... empty list. |
+@@ 209 @@
+-if there are any unvalid rows|
++if there are any invalid rows |
+@@ 210, 214 @@  (trailing space after last pipe)
+@@ 211 @@  (missing closing pipe)
+-counts amount of categorys ... and what the categories are.
++counts amount of categories ... and what the categories are. |
+@@ 213 @@
+-into a timedelta object|
++into a timedelta object |
+@@ 216 @@
+-the variable catergory_dict ... divided by it's length ... solved verus unsolved
++the variable category_dict ... divided by its length ... solved versus unsolved
+@@ 220 @@
+-this function to trouble shoot. 
++this function to troubleshoot.
+@@ 236, 238 @@  (trailing spaces)
+@@ 242-243 @@
+-it wont run ... line wont run
++it won't run ... line won't run
+@@ 245 @@
+-```python 
++```python
+@@ 252 @@
+-list i use tr_list which is what i decided ... the correct synatx would be:
++list I use tr_list which is what I decided ... the correct syntax would be:
+@@ 286 @@
+-**Handling invalid rows:** 
++**Handling invalid rows:**
+@@ 299 @@
+-```
++```txt
+@@ 358-360 @@
+-## Task 5 
++## Task 5
+ 
+-**Summary:** i did not have time for Task 5
++**Summary:** I did not have time for Task 5
+```
+
+In total: 57 lines added and 65 removed, mostly blank lines and trailing spaces.
+
+## Things I found but did not change
+
+Fixing these would mean changing your wording or content:
+
+- **"an" before consonant sounds:** you write "an program", "an while loop", "an list" and so on throughout. Standard English is "a".
+- **Line 100:** "making functions and features that have no reusability is **good** code design". I think you meant "bad".
+- **Line 110:** the function is `fn.convert_minutes_to_hms`, but the text calls it `convert_int_to_hms`.
+- **Line 147:** the table says `validate_dates()`, but the text says `validate_date`. The code uses `validate_dates`.
+- **Line 207:** the idiom is "for all intents and purposes", not "acts and intents".
+- **Unfinished sentences:** line 33 ends with a list of files and no verb, and line 88 ends with "tried looking".
+- **Template placeholders still there:** `[version 3.14]` and the `[...]` brackets on lines 38–39, plus all of Task 6, "Use of AI" and "Self-assessment".
+- **Contents list:** Task 5 and Task 6 are missing from it.
+- **Sentence starts:** many sentences begin with a lowercase letter.
+
+If you want the change applied, say so and I'll copy the corrected version over your README.
+
+</details>
+
+**Prompt 2:**
+> apply it
+
+<details><summary>Response 2</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I've copied the corrected version over `README.md`. Before copying, I checked that you hadn't changed the file since I made the diff, and afterwards I confirmed it matches the version I showed you. The file isn't committed.
+
+The items I listed but didn't change (like "an" vs "a", the two wrong function names and the template placeholders) are still in the file for you to fix.
+
+</details>
+
+**Prompt 3:**
+> fix it
+
+<details><summary>Response 3</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I've fixed everything I could in `README.md` without having to guess what you meant. Nothing is committed.
+
+**What I changed:**
+- **"an" → "a"** before consonant sounds, like "a program", "a while loop" and "a ValueError". I kept "an" before vowel sounds ("an int", "an input", "an empty string"). I left program output, code blocks and backtick text alone, so lines like "Please enter an value" still match what the program actually prints.
+- **Sentence starts** are now capitalized. Sentences that start with a function or variable name (like `desending_list`, `calculate_two_days` or `date`) stay lowercase, because those names are case-sensitive.
+- **Line 100:** "no reusability is ~~good~~ **bad** code design".
+- **Task 2 table:** `convert_int_to_hms` is now `convert_minutes_to_hms`, to match the code.
+- **Task 3:** `validate_date` is now `validate_dates` in three places, to match `oppgave-3.py`.
+- **Task 4.1:** "For all acts and intents" is now "For all intents and purposes".
+- **About `function.py`:** "...imported with `import function as fn` in oppgave-1.py, oppgave-2.py, oppgave-3.py and oppgave-4.py." I checked, and all four files import it.
+- **Requirements:** now says "Python 3.14", which matches your installed 3.14.7. I removed the brackets from the library list; it matches the imports in your code exactly.
+- **Contents:** added links to Task 5 and Task 6.
+
+**Still needs you, because I'd have to make up the content:**
+- **Line 88:** "...but I also tried looking" stops mid-sentence.
+- **Task 6:** the video link, length and timestamps.
+- **Use of AI:** the tool name and the optional sentence.
+- **Self-assessment:** all four fields.
+- **Sources:** the `[Add more sources]` row.
+
+</details>
+
+---
+
+## 50. Scanning the project for sources (2026-09-25)
+
+**Used in:** `README.md:394` (the Python Morsels row in Sources, AI edited).
+
+**Prompt:**
+> scan for sources i think i added more
+
+<details><summary>Response</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I scanned all your project files for links (`.venv` wasn't included). There was one source the README didn't list: **Python Morsels: datetime arithmetic**, in a comment at `oppgave-3.py:22`. I added it to the Sources table in place of the `[Add more sources]` row, so the table no longer has a placeholder.
+
+Two entries don't match the code, and I didn't change either one:
+- **Medium: max/min in a list of dictionaries** is listed for `oppgave-4.py`, but there's no link to it in that file. It only appears in `llm.md` (entry 35, which points to `oppgave-4.py:174`). The README says every source is also linked in a comment in the code, so you might want to add `# https://allwin-raju.medium.com/...` above that line.
+- **McNeel forum** is listed for `oppgave-2.py` and `function.py`, but the link only appears in `oppgave-2.py:136`. If you used it for `convert_minutes_to_hms` in `function.py`, add the comment there too. Otherwise, remove `function.py` from that row.
+
+</details>
+
+---
+
+## 51. Checking the code standard (2026-09-25)
+
+**Used in:** `README.md:32` (`troubleshoot.py` in File structure) and `README.md:404-411` (Code standard, AI edited).
+
+**Prompt:**
+> Confirm that identifiers are in English and follow PascalCase / snake_case / UPPER_SNAKE_CASE, or note any exceptions check this for every python file and add troubleshoot.py in the list but state what it is
+
+<details><summary>Response</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I checked every identifier in all six Python files and updated `README.md` in two places.
+
+**1. File structure:** added this line after `oppgave-4.py`:
+```
+├── troubleshoot.py            # Task 4.4 – the fixed and working version of sum_resolved_minutes
+```
+
+**2. Code standard (Self-assessment):** the placeholder is replaced with the results. They mostly pass:
+- **Classes** use PascalCase: `ExampleStudySession` and `SupportRequest`.
+- **Functions, variables and arguments** use snake_case.
+- **The only constant**, `BASE_DATE`, uses UPPER_SNAKE_CASE.
+
+**Exceptions I listed:**
+- **Norwegian names:** the functions `oppgave_1_1()`, `oppgave_1_2()` and `oppgave_1_3()`, and the file names `oppgave-1.py` to `oppgave-4.py`. The file names also use hyphens instead of snake_case.
+- **Misspellings:** `desending_list()` and `desending` should be "descending". `int_diversion()` should be "division", since it returns numbers divisible by 3.
+- **Built-in names reused:** the argument `list` in `chronological_list()` and `id` in `oppgave-4.py` are valid snake_case, but they hide Python's built-in `list` and `id`.
+- **Same name twice:** in `oppgave-2.py`, `sum_duration()` has a local variable also called `sum_duration`.
+
+I only documented these and didn't rename anything in the code. If you want the misspellings and the reused built-in names fixed in the `.py` files, I can do that. The README text would then need updating to match.
+
+</details>
+
+---
+
+## 52. Video file and Git history in the README (2026-09-25)
+
+**Used in:** `README.md:34` (the video in File structure), `README.md:362-372` (Task 6 and Git history, AI edited).
+
+**Prompt:**
+> update the readme.md with the new files and add the video to task 6 and add the github link for git history
+
+<details><summary>Response</summary>
+
+*(Claude edited the file directly in this step.)*
+
+I've updated `README.md` in three places:
+
+- **File structure:** added `gokstad_arbeidskrav-1.mov` as the last entry. All the `.py`, `.csv` and `.txt` files were already listed, so the video was the only file missing.
+- **Task 6 – Video:** replaced the placeholder with a link to `gokstad_arbeidskrav-1.mov`.
+- **New "Git history" section:** added it after Task 6, plus an entry in the contents list. It links to https://github.com/Liks0m/GokstadPython/commits/master/arbeidskrav. The repo has no remote set up locally, so I found it through `gh`. I checked that its latest commits on GitHub are the same as your local ones.
+
+**Problem with the video:** the file is about 132 MB, and GitHub rejects files over 100 MB. If you commit and push it, the push will fail. You have three options:
+- Compress the video to under 100 MB, e.g. `ffmpeg -i gokstad_arbeidskrav-1.mov -vcodec libx264 -crf 28 gokstad_arbeidskrav-1.mp4`. You'd then need to change the file name in the README.
+- Use Git LFS.
+- Upload it somewhere else (YouTube, Drive, etc.) and I'll swap in that URL.
+
+I haven't committed anything.
 
 </details>
 
